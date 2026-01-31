@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-files-path name="dcim" path="DCIM/" />
+    <external-files-path name="dcim1" path="DCIM_1/" />
+    <external-files-path name="root" path="." />
+</paths>
