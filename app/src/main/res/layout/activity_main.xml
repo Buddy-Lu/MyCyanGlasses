@@ -196,7 +196,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="8dp">
 
             <Button
                 android:id="@+id/btnDownloadMedia"
@@ -215,6 +215,25 @@
                 android:text="View Gallery" />
 
         </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Backend Settings"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Upload Status -->
+        <TextView
+            android:id="@+id/tvUploadStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto-upload: Not configured"
+            android:textSize="14sp"
+            android:textColor="#FF9800"
+            android:background="@android:color/darker_gray"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp" />
 
         <!-- Divider -->
         <View

@@ -57,6 +57,7 @@
 
         <activity android:name=".DeviceScanActivity" />
         <activity android:name=".GalleryActivity" />
+        <activity android:name=".SettingsActivity" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updateConnectionUI()
+        updateUploadStatusUI()
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -159,6 +160,11 @@ class MainActivity : AppCompatActivity() {
             appendLog("Download Media button pressed")
             downloadMedia()
         }
+
+        binding.btnSettings.setOnClickListener {
+            appendLog("Opening settings...")
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
     }
 
     private fun setupDeviceListener() {
@@ -201,6 +207,10 @@ class MainActivity : AppCompatActivity() {
                 appendLog("Notification type: 0x${notifyType.toString(16)}")
 
                 when (notifyType) {
+                    0x01 -> { // Photo captured notification
+                        appendLog("Photo captured notification received!")
+                        triggerPhotoUpload()
+                    }
                     0x05 -> { // Battery update
                         if (data.size > 8) {
                             val battery = data[7].toInt() and 0xFF
@@ -296,6 +306,12 @@ class MainActivity : AppCompatActivity() {
 
                     if (response.dataType == 1 && response.errorCode == 0) {
                         Toast.makeText(this, "Photo command sent!", Toast.LENGTH_SHORT).show()
+
+                        // Trigger auto-upload after photo is taken (fallback if notification doesn't work)
+                        // Delay to give the photo time to be saved
+                        binding.root.postDelayed({
+                            triggerPhotoUpload()
+                        }, 2000)
                     }
                 }
             }
@@ -524,4 +540,60 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("OK", null)
             .show()
     }
+
+    private fun triggerPhotoUpload() {
+        appendLog("Triggering auto-upload...")
+
+        PhotoAutoUploader.onPhotoTaken(this, object : PhotoAutoUploader.UploadListener {
+            override fun onUploadStarted(filename: String) {
+                appendLog("Upload started: $filename")
+                runOnUiThread {
+                    binding.tvUploadStatus.text = "Uploading: $filename"
+                }
+            }
+
+            override fun onUploadProgress(filename: String, message: String) {
+                appendLog("Upload progress: $filename - $message")
+                runOnUiThread {
+                    binding.tvUploadStatus.text = "Uploading: $filename - $message"
+                }
+            }
+
+            override fun onUploadSuccess(filename: String, responseBody: String?) {
+                appendLog("Upload SUCCESS: $filename")
+                appendLog("Response: ${responseBody?.take(200)}")
+                runOnUiThread {
+                    binding.tvUploadStatus.text = "✓ Uploaded: $filename"
+                    Toast.makeText(this@MainActivity, "Photo uploaded successfully!", Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onUploadFailed(filename: String, error: String) {
+                appendLog("Upload FAILED: $filename - $error")
+                runOnUiThread {
+                    binding.tvUploadStatus.text = "✗ Upload failed: $error"
+                    if (error.contains("not configured")) {
+                        Toast.makeText(this@MainActivity, "Configure backend in Settings first", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
+        })
+    }
+
+    private fun updateUploadStatusUI() {
+        val isConfigured = PhotoUploadManager.isEndpointConfigured(this)
+        val endpoint = PhotoUploadManager.getApiEndpoint(this)
+
+        runOnUiThread {
+            if (isConfigured) {
+                binding.tvUploadStatus.text = "Auto-upload: Enabled\nEndpoint: ${endpoint.take(40)}..."
+                binding.tvUploadStatus.setTextColor(getColor(android.R.color.holo_green_dark))
+            } else {
+                binding.tvUploadStatus.text = "Auto-upload: Not configured (using default test endpoint)"
+                binding.tvUploadStatus.setTextColor(getColor(android.R.color.holo_orange_dark))
+            }
+        }
+    }
 }
+
+
